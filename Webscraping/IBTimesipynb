@@ -1,0 +1,541 @@
+{
+  "cells": [
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "kd1tuN3kM61c"
+      },
+      "outputs": [],
+      "source": [
+        "# Importing important libraries \n",
+        "import urllib.request, sys, time\n",
+        "from bs4 import BeautifulSoup\n",
+        "import requests\n",
+        "import pandas as pd"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "yq-SJZvJNZpQ"
+      },
+      "outputs": [],
+      "source": [
+        "news_count_threshold = 1000\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "WWdIT4QDNNMd"
+      },
+      "outputs": [],
+      "source": [
+        "sub_cat_dict = {\"society\": [\"politics\", \"crime\", \"fact-check\"], \n",
+        "                \"business\": [\"markets\", \"companies\", \"finance\"], \n",
+        "                \"technology\": [\"smartphones\", \"tablets\", \"internet\", \"games\"], \n",
+        "                \"sports\": [\"indian-premier-league\", \"football\", \"cricket\"], \n",
+        "                \"entertainment\": [\"bollywood\", \"hollywood\", \"television\", \"south-cinema\"]}"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "WRrDiUdyNYN7"
+      },
+      "outputs": [],
+      "source": [
+        "total_cat_count = len(sub_cat_dict)\n",
+        "total_sub_cat_count = len([i for v in sub_cat_dict.values() for i in v])\n",
+        "news_per_page_count = 15\n",
+        "news_per_category = int(news_count_threshold/total_sub_cat_count)\n",
+        "pages_per_sub_cat = 1+ int(news_per_category/news_per_page_count)\n",
+        "ews_headlines = list()\n",
+        "news_links = list()\n",
+        "news_authors = list()\n",
+        "news_dates = list()\n",
+        "news_times = list()\n",
+        "news_entire = list()\n",
+        "news_cats = list()\n",
+        "news_subcats = list()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "background_save": true,
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "ssAIVn5bNcSb",
+        "outputId": "6d5a2e1e-7141-466a-b68b-0a33c8aa0097"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "society:politics\n",
+            "society:crime\n",
+            "society:fact-check\n",
+            "business:markets\n",
+            "business:companies\n",
+            "business:finance\n",
+            "technology:smartphones\n",
+            "technology:tablets\n",
+            "technology:internet\n",
+            "technology:games\n",
+            "sports:indian-premier-league\n",
+            "sports:football\n",
+            "sports:cricket\n",
+            "entertainment:bollywood\n",
+            "entertainment:hollywood\n",
+            "entertainment:television\n",
+            "entertainment:south-cinema\n"
+          ]
+        }
+      ],
+      "source": [
+        "\n",
+        "\n",
+        "for cat in sub_cat_dict:\n",
+        "    for sub_cat in sub_cat_dict[cat]:\n",
+        "        print(str(cat)+':'+str(sub_cat))\n",
+        "        for page_no in range(1, pages_per_sub_cat+1):\n",
+        "                # Specifying the URL \n",
+        "                    url = \"https://www.ibtimes.co.in/{}/page/{}\".format(sub_cat, page_no)\n",
+        "                    # Using BeautifulSoup for web crawling\n",
+        "                    page = requests.get(url)\n",
+        "                    soup = BeautifulSoup(page.content, \"html.parser\")\n",
+        "                    links = []\n",
+        "                    for i in soup.find_all('div',class_='repo-desc'):\n",
+        "                      news_links.append(i.h2.a.get('href'))\n",
+        "                      ews_headlines.append(i.a.get_text())\n",
+        "                      links.append(i.h2.a.get('href'))\n",
+        "                    # iterating through links of page scraped from\n",
+        "                    for url in links:\n",
+        "                      page = requests.get(str(url))\n",
+        "                      article = BeautifulSoup(page.content, \"html.parser\")\n",
+        "                      text =''\n",
+        "                      for i in article.find_all('p'):\n",
+        "                        text = text + ' ' + i.get_text()\n",
+        "                      try:\n",
+        "                        date = article.time.attrs['datetime'].split('T')[0]\n",
+        "                      except:\n",
+        "                        date = 'date not available'\n",
+        "                      try:\n",
+        "                        time = article.time.attrs['datetime'].split('T')[1].split('+')[0]\n",
+        "                      except:\n",
+        "                        time = 'time not available'\n",
+        "                      try:\n",
+        "                        author = article.find('span',class_='author').span.get_text()\n",
+        "                      except:\n",
+        "                        author = 'author not available'\n",
+        "                      \n",
+        "                      news_authors.append(author)\n",
+        "                      news_dates.append(date)\n",
+        "                      news_times.append(time)\n",
+        "                      news_entire.append(text)\n",
+        "                      news_cats.append(cat)\n",
+        "                      news_subcats.append(sub_cat)\n",
+        "\n",
+        "\n",
+        "\n",
+        "                            \n",
+        "                            \n",
+        "                            \n",
+        "\n",
+        "\n",
+        "                "
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 36
+        },
+        "id": "VT6RHi4MyG01",
+        "outputId": "6a462cef-22c9-4e3b-fcde-d50087e943fc"
+      },
+      "outputs": [
+        {
+          "data": {
+            "application/vnd.google.colaboratory.intrinsic+json": {
+              "type": "string"
+            },
+            "text/plain": [
+              "'https://www.ibtimes.co.in/alia-bhatt-upset-ss-rajamoulis-rrr-team-heres-truth-847055'"
+            ]
+          },
+          "execution_count": 148,
+          "metadata": {},
+          "output_type": "execute_result"
+        }
+      ],
+      "source": [
+        "url"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "SSgUQR1Vxdlv",
+        "outputId": "16f86313-e002-44d1-a28b-176793743cd7"
+      },
+      "outputs": [
+        {
+          "data": {
+            "text/plain": [
+              "(900, 900, 900, 900, 900, 900)"
+            ]
+          },
+          "execution_count": 158,
+          "metadata": {},
+          "output_type": "execute_result"
+        }
+      ],
+      "source": [
+        "len(news_dates),len(news_times),len(news_cats),len(news_subcats),len(ews_headlines),len(news_entire)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "bz0M1Hb_1tcy"
+      },
+      "outputs": [],
+      "source": [
+        "def clean_text(x):\n",
+        "  t = str(x)\n",
+        "  t=t.lower() #We get the text from the paragraphs tags and convert into lowercase\n",
+        "  t=re.sub(\"(w+://S+)\",\" \",t) #We use regex to find and remove all links in the text\n",
+        "  t=re.sub(\"\"\"[.,!?:;-='...\"@#_]\"\"\", \" \",t) #We use regex to find and remove all punctuations in the text\n",
+        "  t= re.sub('\\d+', '', t) #We use regex to find and remove all digits in the text\n",
+        "  t = remove_stopwords(t)\n",
+        "  return str(t)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "Ekq_ldhrx4aa"
+      },
+      "outputs": [],
+      "source": [
+        "News_Corpus = pd.DataFrame({\"Date\": news_dates, \"Time\": news_times, \"Category\": news_cats,\n",
+        "                            \"Sub-Category\": news_subcats, \"Headline\": ews_headlines,\n",
+        "                           \"Entire_News\": news_entire, \"Author\": news_authors, \"News_Link\": news_links})"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 354
+        },
+        "id": "KwEH9_1M-zQq",
+        "outputId": "a0363349-7043-4010-8bfc-72090fdb1c0e"
+      },
+      "outputs": [
+        {
+          "data": {
+            "text/html": [
+              "\n",
+              "  <div id=\"df-a4fc3672-ac39-4f8e-8eaa-06473e1f5bd0\">\n",
+              "    <div class=\"colab-df-container\">\n",
+              "      <div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>Date</th>\n",
+              "      <th>Time</th>\n",
+              "      <th>Category</th>\n",
+              "      <th>Sub-Category</th>\n",
+              "      <th>Headline</th>\n",
+              "      <th>Entire_News</th>\n",
+              "      <th>Author</th>\n",
+              "      <th>News_Link</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>2022-03-14</td>\n",
+              "      <td>16:50:19</td>\n",
+              "      <td>society</td>\n",
+              "      <td>fact-check</td>\n",
+              "      <td>Fact check: No, Ugandan cop didn't hit journal...</td>\n",
+              "      <td>A Ugandan cop is creating a buzz on social me...</td>\n",
+              "      <td>\\nSami Khan                                   ...</td>\n",
+              "      <td>https://www.ibtimes.co.in/fact-check-no-uganda...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>2022-02-21</td>\n",
+              "      <td>21:54:03</td>\n",
+              "      <td>society</td>\n",
+              "      <td>fact-check</td>\n",
+              "      <td>Fact check: Murdered Bajrang Dal activist not ...</td>\n",
+              "      <td>The brutal murder of Bajrang Dal activist in ...</td>\n",
+              "      <td>\\nSami Khan                                   ...</td>\n",
+              "      <td>https://www.ibtimes.co.in/fact-check-murdered-...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>2022-02-16</td>\n",
+              "      <td>01:03:07</td>\n",
+              "      <td>society</td>\n",
+              "      <td>fact-check</td>\n",
+              "      <td>Fact check: Nandan Nilekani isn't launching cr...</td>\n",
+              "      <td>Discussion over cryptocurrency took prominenc...</td>\n",
+              "      <td>\\nSami Khan                                   ...</td>\n",
+              "      <td>https://www.ibtimes.co.in/fact-check-nandan-ni...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>2022-02-09</td>\n",
+              "      <td>02:12:06</td>\n",
+              "      <td>society</td>\n",
+              "      <td>fact-check</td>\n",
+              "      <td>Fact check: Indian flag not replaced by saffro...</td>\n",
+              "      <td>Shocking details are emerging from the widesp...</td>\n",
+              "      <td>\\nSami Khan                                   ...</td>\n",
+              "      <td>https://www.ibtimes.co.in/fact-check-indian-fl...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>2022-02-08</td>\n",
+              "      <td>18:20:45</td>\n",
+              "      <td>society</td>\n",
+              "      <td>fact-check</td>\n",
+              "      <td>Fact check: Viral video falsely links J&amp;K poli...</td>\n",
+              "      <td>University of Kashmir students are protesting...</td>\n",
+              "      <td>\\nSami Khan                                   ...</td>\n",
+              "      <td>https://www.ibtimes.co.in/fact-check-viral-vid...</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div>\n",
+              "      <button class=\"colab-df-convert\" onclick=\"convertToInteractive('df-a4fc3672-ac39-4f8e-8eaa-06473e1f5bd0')\"\n",
+              "              title=\"Convert this dataframe to an interactive table.\"\n",
+              "              style=\"display:none;\">\n",
+              "        \n",
+              "  <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\"viewBox=\"0 0 24 24\"\n",
+              "       width=\"24px\">\n",
+              "    <path d=\"M0 0h24v24H0V0z\" fill=\"none\"/>\n",
+              "    <path d=\"M18.56 5.44l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94zm-11 1L8.5 8.5l.94-2.06 2.06-.94-2.06-.94L8.5 2.5l-.94 2.06-2.06.94zm10 10l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94z\"/><path d=\"M17.41 7.96l-1.37-1.37c-.4-.4-.92-.59-1.43-.59-.52 0-1.04.2-1.43.59L10.3 9.45l-7.72 7.72c-.78.78-.78 2.05 0 2.83L4 21.41c.39.39.9.59 1.41.59.51 0 1.02-.2 1.41-.59l7.78-7.78 2.81-2.81c.8-.78.8-2.07 0-2.86zM5.41 20L4 18.59l7.72-7.72 1.47 1.35L5.41 20z\"/>\n",
+              "  </svg>\n",
+              "      </button>\n",
+              "      \n",
+              "  <style>\n",
+              "    .colab-df-container {\n",
+              "      display:flex;\n",
+              "      flex-wrap:wrap;\n",
+              "      gap: 12px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert {\n",
+              "      background-color: #E8F0FE;\n",
+              "      border: none;\n",
+              "      border-radius: 50%;\n",
+              "      cursor: pointer;\n",
+              "      display: none;\n",
+              "      fill: #1967D2;\n",
+              "      height: 32px;\n",
+              "      padding: 0 0 0 0;\n",
+              "      width: 32px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert:hover {\n",
+              "      background-color: #E2EBFA;\n",
+              "      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "      fill: #174EA6;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert {\n",
+              "      background-color: #3B4455;\n",
+              "      fill: #D2E3FC;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert:hover {\n",
+              "      background-color: #434B5C;\n",
+              "      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);\n",
+              "      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));\n",
+              "      fill: #FFFFFF;\n",
+              "    }\n",
+              "  </style>\n",
+              "\n",
+              "      <script>\n",
+              "        const buttonEl =\n",
+              "          document.querySelector('#df-a4fc3672-ac39-4f8e-8eaa-06473e1f5bd0 button.colab-df-convert');\n",
+              "        buttonEl.style.display =\n",
+              "          google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "\n",
+              "        async function convertToInteractive(key) {\n",
+              "          const element = document.querySelector('#df-a4fc3672-ac39-4f8e-8eaa-06473e1f5bd0');\n",
+              "          const dataTable =\n",
+              "            await google.colab.kernel.invokeFunction('convertToInteractive',\n",
+              "                                                     [key], {});\n",
+              "          if (!dataTable) return;\n",
+              "\n",
+              "          const docLinkHtml = 'Like what you see? Visit the ' +\n",
+              "            '<a target=\"_blank\" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'\n",
+              "            + ' to learn more about interactive tables.';\n",
+              "          element.innerHTML = '';\n",
+              "          dataTable['output_type'] = 'display_data';\n",
+              "          await google.colab.output.renderOutput(dataTable, element);\n",
+              "          const docLink = document.createElement('div');\n",
+              "          docLink.innerHTML = docLinkHtml;\n",
+              "          element.appendChild(docLink);\n",
+              "        }\n",
+              "      </script>\n",
+              "    </div>\n",
+              "  </div>\n",
+              "  "
+            ],
+            "text/plain": [
+              "         Date      Time Category Sub-Category  \\\n",
+              "0  2022-03-14  16:50:19  society   fact-check   \n",
+              "1  2022-02-21  21:54:03  society   fact-check   \n",
+              "2  2022-02-16  01:03:07  society   fact-check   \n",
+              "3  2022-02-09  02:12:06  society   fact-check   \n",
+              "4  2022-02-08  18:20:45  society   fact-check   \n",
+              "\n",
+              "                                            Headline  \\\n",
+              "0  Fact check: No, Ugandan cop didn't hit journal...   \n",
+              "1  Fact check: Murdered Bajrang Dal activist not ...   \n",
+              "2  Fact check: Nandan Nilekani isn't launching cr...   \n",
+              "3  Fact check: Indian flag not replaced by saffro...   \n",
+              "4  Fact check: Viral video falsely links J&K poli...   \n",
+              "\n",
+              "                                         Entire_News  \\\n",
+              "0   A Ugandan cop is creating a buzz on social me...   \n",
+              "1   The brutal murder of Bajrang Dal activist in ...   \n",
+              "2   Discussion over cryptocurrency took prominenc...   \n",
+              "3   Shocking details are emerging from the widesp...   \n",
+              "4   University of Kashmir students are protesting...   \n",
+              "\n",
+              "                                              Author  \\\n",
+              "0  \\nSami Khan                                   ...   \n",
+              "1  \\nSami Khan                                   ...   \n",
+              "2  \\nSami Khan                                   ...   \n",
+              "3  \\nSami Khan                                   ...   \n",
+              "4  \\nSami Khan                                   ...   \n",
+              "\n",
+              "                                           News_Link  \n",
+              "0  https://www.ibtimes.co.in/fact-check-no-uganda...  \n",
+              "1  https://www.ibtimes.co.in/fact-check-murdered-...  \n",
+              "2  https://www.ibtimes.co.in/fact-check-nandan-ni...  \n",
+              "3  https://www.ibtimes.co.in/fact-check-indian-fl...  \n",
+              "4  https://www.ibtimes.co.in/fact-check-viral-vid...  "
+            ]
+          },
+          "execution_count": 163,
+          "metadata": {},
+          "output_type": "execute_result"
+        }
+      ],
+      "source": [
+        "News_Corpus.head()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "_MaK5VpU_BgD"
+      },
+      "outputs": [],
+      "source": [
+        "from gensim.parsing.preprocessing import remove_stopwords \n",
+        "from gensim.summarization import keywords\n",
+        "import re\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 166
+        },
+        "id": "rPbi_QX_8yDm",
+        "outputId": "271fdc80-d61d-496e-c374-b06f04bfa41d"
+      },
+      "outputs": [
+        {
+          "ename": "NameError",
+          "evalue": "ignored",
+          "output_type": "error",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m                                 Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-2-454c49f4a156>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[0;32m----> 1\u001b[0;31m \u001b[0mNews_Corpus\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mto_csv\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m'IBTimes.csv'\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m: name 'News_Corpus' is not defined"
+          ]
+        }
+      ],
+      "source": [
+        "News_Corpus.to_csv('IBTimes.csv')"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "heL7TI5V9Z2U"
+      },
+      "outputs": [],
+      "source": [
+        ""
+      ]
+    }
+  ],
+  "metadata": {
+    "colab": {
+      "name": "IBN Times Scraping.ipynb",
+      "provenance": []
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
